@@ -62,18 +62,21 @@ line1+=" | ${G}${remaining_pct}% remain $(fmt $remaining_tokens)${R}"
 line1+=" | ${C}thinking: On${R}"
 
 # ┌─────────────────────────────────────────────────────────────────┐
-# │ Line 2: Rate limit bars (current = real, weekly/extra = mock)  │
+# │ Line 2: Context bar (real) + rate limit bars (manual)          │
 # └─────────────────────────────────────────────────────────────────┘
-# NOTE: Claude Code doesn't expose rate-limit data to status lines.
-# "current" uses your real context-window %. Weekly & extra are
-# placeholders — customize the values below or remove them.
-WEEKLY_PCT=20
-EXTRA_PCT=40
-EXTRA_COST="\$24.19/\$50"
+# "context" = real context window usage from Claude Code JSON.
+# "current", "weekly", and "extra" are NOT available via the status
+# line API — update these manually from /usage, or remove them.
+SESSION_PCT=26
+WEEKLY_PCT=47
+EXTRA_USED="\$130.96"
+EXTRA_LIMIT="\$150"
+EXTRA_PCT=87
 
-line2="${G}current: $(bar "$used_pct") ${used_pct}%${R}"
+line2="${G}context: $(bar "$used_pct") ${used_pct}%${R}"
+line2+=" | ${C}current: $(bar $SESSION_PCT) ${SESSION_PCT}%${R}"
 line2+=" | ${Y}weekly: $(bar $WEEKLY_PCT) ${WEEKLY_PCT}%${R}"
-line2+=" | ${Y}extra: $(bar $EXTRA_PCT) ${EXTRA_COST}${R}"
+line2+=" | ${Y}extra: $(bar $EXTRA_PCT) ${EXTRA_USED}/${EXTRA_LIMIT}${R}"
 
 # ┌─────────────────────────────────────────────────────────────────┐
 # │ Line 3: Reset countdowns (placeholder — customize as needed)   │
