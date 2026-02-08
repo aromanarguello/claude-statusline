@@ -291,9 +291,10 @@ line1+=" | ${G}${total_k}k / ${context_k}k${R}"
 line1+=" | ${Y}${used_pct}% used $(fmt $total_tokens)${R}"
 line1+=" | ${G}${remaining_pct}% remain $(fmt $remaining_tokens)${R}"
 
-# Session cost (only show if non-zero)
+# Session cost (only show if non-zero, formatted to 2 decimal places)
 if [[ "$session_cost" != "0" ]] && [[ "$session_cost" != "0.0" ]] && [[ "$session_cost" != "0e"* ]]; then
-  line1+=" | ${C}\$${session_cost}${R}"
+  cost_fmt=$(awk "BEGIN {printf \"%.2f\", $session_cost}" 2>/dev/null) || cost_fmt="$session_cost"
+  line1+=" | ${C}\$${cost_fmt}${R}"
 fi
 
 # Lines changed (only show if any)
