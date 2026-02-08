@@ -25,6 +25,13 @@ if ! command -v jq &>/dev/null; then
   exit 1
 fi
 
+if ! command -v curl &>/dev/null; then
+  echo "Error: curl is required for rate limit data. Install it with:"
+  echo "  brew install curl      # macOS"
+  echo "  apt install curl       # Debian/Ubuntu"
+  exit 1
+fi
+
 # --- Determine source file ---
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" 2>/dev/null && pwd || pwd)"
 
