@@ -41,7 +41,6 @@ parsed=$(echo "$input" | jq -r '[
   (.context_window.context_window_size // 200000),
   (.context_window.used_percentage // 0),
   (.context_window.remaining_percentage // 0),
-  (.cost.total_cost_usd // 0),
   (.cost.total_lines_added // 0),
   (.cost.total_lines_removed // 0),
   (.version // "unknown")
@@ -49,10 +48,10 @@ parsed=$(echo "$input" | jq -r '[
 
 if [[ -n "$parsed" ]]; then
   IFS=$'\t' read -r model_name total_input total_output context_size used_pct remaining_pct \
-       session_cost lines_added lines_removed cc_version <<< "$parsed"
+       lines_added lines_removed cc_version <<< "$parsed"
 else
   model_name="Unknown"; total_input=0; total_output=0; context_size=200000
-  used_pct=0; remaining_pct=0; session_cost=0; lines_added=0; lines_removed=0; cc_version="unknown"
+  used_pct=0; remaining_pct=0; lines_added=0; lines_removed=0; cc_version="unknown"
 fi
 
 # --- Computed values ---
@@ -207,13 +206,8 @@ get_usage_data() {
   # Defaults (graceful degradation)
   five_hour_pct="---"
   weekly_pct="---"
-  extra_enabled="false"
-  extra_pct="---"
-  extra_used="---"
-  extra_limit="---"
   five_hour_reset="---"
   weekly_reset="---"
-  monthly_reset="---"
 
   if [[ -f "$USAGE_CACHE" ]]; then
     local cache_age
@@ -225,49 +219,20 @@ get_usage_data() {
       (.five_hour.utilization // -1 | floor),
       (.five_hour.resets_at // ""),
       ((.seven_day.utilization // -1) | floor),
-      (.seven_day.resets_at // ""),
-      (.extra_usage.is_enabled // false),
-      (.extra_usage.utilization // -1 | floor),
-      (.extra_usage.used_credits // 0),
-      (.extra_usage.monthly_limit // -1)
+      (.seven_day.resets_at // "")
     ] | @tsv' "$USAGE_CACHE" 2>/dev/null) || usage_parsed=""
 
     if [[ -n "$usage_parsed" ]]; then
-      local fh_pct_raw fh_reset_raw wk_pct_raw wk_reset_raw ex_en ex_pct_raw ex_used_raw ex_limit_raw
-      IFS=$'\t' read -r fh_pct_raw fh_reset_raw wk_pct_raw wk_reset_raw \
-           ex_en ex_pct_raw ex_used_raw ex_limit_raw <<< "$usage_parsed"
+      local fh_pct_raw fh_reset_raw wk_pct_raw wk_reset_raw
+      IFS=$'\t' read -r fh_pct_raw fh_reset_raw wk_pct_raw wk_reset_raw <<< "$usage_parsed"
 
       # Convert -1 (missing) to "---"
       [[ "$fh_pct_raw" != "-1" ]] && five_hour_pct="$fh_pct_raw"
       [[ "$wk_pct_raw" != "-1" ]] && weekly_pct="$wk_pct_raw"
 
-      extra_enabled="$ex_en"
-
-      if [[ "$extra_enabled" == "true" ]]; then
-        [[ "$ex_pct_raw" != "-1" ]] && extra_pct="$ex_pct_raw"
-        # Convert cents to dollars
-        if [[ "$ex_used_raw" != "0" ]]; then
-          extra_used=$(awk "BEGIN {printf \"%.2f\", $ex_used_raw / 100}" 2>/dev/null) || extra_used="---"
-        fi
-        # monthly_limit can be -1 (null/unlimited) or a real value in cents
-        if [[ "$ex_limit_raw" == "-1" ]]; then
-          extra_limit="Unlimited"
-        elif [[ "$ex_limit_raw" != "0" ]]; then
-          extra_limit=$(awk "BEGIN {printf \"%.0f\", $ex_limit_raw / 100}" 2>/dev/null) || extra_limit="---"
-        fi
-      fi
-
       # Convert reset times
       [[ -n "$fh_reset_raw" ]] && five_hour_reset=$(format_reset_time "$fh_reset_raw")
       [[ -n "$wk_reset_raw" ]] && weekly_reset=$(format_reset_time "$wk_reset_raw")
-
-      # Monthly reset: 1st of next month
-      if [[ "$(uname -s)" == "Darwin" ]]; then
-        monthly_reset=$(date -v+1m -v1d +"%b %-d" 2>/dev/null | tr '[:upper:]' '[:lower:]') || monthly_reset="---"
-      else
-        monthly_reset=$(date -d "next month" +"%b %-d" 2>/dev/null | tr '[:upper:]' '[:lower:]') || monthly_reset="---"
-      fi
-      [[ -z "$monthly_reset" ]] && monthly_reset="---"
     fi
 
     # Trigger background refresh if stale
@@ -290,12 +255,6 @@ line1="${G}${model_name}${R}"
 line1+=" | ${G}${total_k}k / ${context_k}k${R}"
 line1+=" | ${Y}${used_pct}% used $(fmt $total_tokens)${R}"
 line1+=" | ${G}${remaining_pct}% remain $(fmt $remaining_tokens)${R}"
-
-# Session cost (only show if non-zero, formatted to 2 decimal places)
-if [[ "$session_cost" != "0" ]] && [[ "$session_cost" != "0.0" ]] && [[ "$session_cost" != "0e"* ]]; then
-  cost_fmt=$(awk "BEGIN {printf \"%.2f\", $session_cost}" 2>/dev/null) || cost_fmt="$session_cost"
-  line1+=" | ${C}\$${cost_fmt}${R}"
-fi
 
 # Lines changed (only show if any)
 if [[ "$lines_added" != "0" ]] || [[ "$lines_removed" != "0" ]]; then
@@ -323,24 +282,12 @@ else
   line2+=" | ${wk_color}weekly: $(bar "$weekly_pct") ${weekly_pct}%${R}"
 fi
 
-# Extra credits: only show if enabled
-if [[ "$extra_enabled" == "true" ]]; then
-  ex_color=$(color_for_pct "$extra_pct")
-  if [[ "$extra_pct" == "---" ]]; then
-    line2+=" | ${D}extra: $(bar "---") ---${R}"
-  else
-    line2+=" | ${ex_color}extra: $(bar "$extra_pct") \$${extra_used}/\$${extra_limit}${R}"
-  fi
-fi
 
 # ┌─────────────────────────────────────────────────────────────────┐
 # │ Line 3: Reset times — real data from API                       │
 # └─────────────────────────────────────────────────────────────────┘
 line3="${D}5-hour resets ${five_hour_reset}${R}"
 line3+=" | ${D}weekly resets ${weekly_reset}${R}"
-if [[ "$extra_enabled" == "true" ]]; then
-  line3+=" | ${D}monthly resets ${monthly_reset}${R}"
-fi
 
 # --- Output ---
 printf "%b\n%b\n%b\n" "$line1" "$line2" "$line3"
