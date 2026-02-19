@@ -34,36 +34,47 @@ On first run, rate limit bars show `---` for ~1 second until the background API 
 ## Install
 
 ```bash
+npx claude-statusline
+```
+
+Or clone and run locally:
+
+```bash
 git clone https://github.com/aromanarguello/claude-statusline.git
 cd claude-statusline
 ./install.sh
 ```
 
-Then restart Claude Code.
+The wizard asks what data to show, how to format it, previews the result, then writes the script and patches `~/.claude/settings.json` (only the `statusLine` key — all other settings preserved).
+
+## What you can configure
+
+| Field | Description | Requires |
+|-------|-------------|---------|
+| Model name | Active Claude model | — |
+| Token counts | Used / total context size | — |
+| Used % | % of context used | — |
+| Remaining % | % of context remaining | — |
+| Lines changed | +added / -removed in session | — |
+| Context bar | ●●●○○○○○○○ visual progress bar | — |
+| Rate limit bars | 5-hour & weekly usage bars | Pro/Max/Team |
+| Reset times | When rate limits reset | Pro/Max/Team |
+
+**Enterprise/API users:** Rate limit fields are automatically hidden — the wizard detects your account type silently.
+
+## Reconfigure
+
+```bash
+npx claude-statusline
+```
+
+Re-running the wizard overwrites `~/.claude/statusline-command.sh` with your new choices.
 
 ## Uninstall
 
 ```bash
-cd claude-statusline
-./uninstall.sh
+cd claude-statusline && ./uninstall.sh
 ```
-
-## Credential access
-
-On **macOS**, credentials are read from the Keychain (set up automatically when you log in to Claude Code). No extra configuration needed.
-
-On **Linux** or other systems, the script falls back to `~/.claude/.credentials.json` if it exists.
-
-If no credentials are found, rate limit bars gracefully show `---` and the statusline still works for context/model data.
-
-## Customize
-
-Edit `~/.claude/statusline-command.sh` to tweak:
-
-- **Cache duration** — change `CACHE_MAX_AGE` (default 60 seconds)
-- **Colors** — modify the ANSI escape codes
-- **Color thresholds** — adjust the `color_for_pct()` function (default: green <50%, yellow 50-79%, red 80%+)
-- **Remove lines** — delete any `line2`/`line3` sections you don't need
 
 ## License
 
