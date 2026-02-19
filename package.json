@@ -1,0 +1,18 @@
+{
+  "name": "claude-statusline",
+  "version": "1.0.0",
+  "description": "Interactive wizard to configure your Claude Code status line",
+  "type": "module",
+  "bin": {
+    "claude-statusline": "./setup.js"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  },
+  "dependencies": {
+    "@clack/prompts": "^0.9.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
