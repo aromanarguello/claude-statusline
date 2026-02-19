@@ -113,6 +113,8 @@ try {
     encoding: 'utf8',
   })
   if (result.stdout) process.stdout.write(result.stdout)
+  if (result.stderr) p.log.warn('Preview stderr: ' + result.stderr)
+  if (result.status !== 0 && !result.stdout) p.log.warn('Preview exited with code ' + result.status)
   if (result.error) p.log.warn('Preview failed: ' + result.error.message)
 } finally {
   try { unlinkSync(tmpScript) } catch { /* ignore */ }
