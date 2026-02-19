@@ -47,6 +47,51 @@ cd claude-statusline
 
 The wizard asks what data to show, how to format it, previews the result, then writes the script and patches `~/.claude/settings.json` (only the `statusLine` key — all other settings preserved).
 
+## Using the wizard
+
+Running `npx claude-statusline` (or `node setup.js` if cloned locally) walks you through 4 steps:
+
+**Step 1 — Pick your fields** (multi-select, space to toggle)
+```
+◆ Which data fields do you want?
+◇ ◼ Model name
+◇ ◼ Token counts (used / total)
+◇ ◼ Used % with raw token count
+◇ ◼ Remaining % with raw token count
+◇ ◻ Lines changed (+added / -removed)
+◇ ◼ Context window progress bar
+```
+
+**Step 2 — Pick a layout**
+```
+◆ Layout?
+● Multi-line  (model/tokens on line 1, bars on line 2)
+○ Single line (everything on one line)
+```
+
+**Step 3 — Pick colors**
+```
+◆ Color style?
+● Traffic-light  (green <50%, yellow 50-79%, red >=80%)
+○ Monochrome  (no colors)
+○ Custom thresholds
+```
+
+**Step 4 — Preview + confirm**
+
+The wizard renders your statusline with sample data so you see exactly what it looks like before writing anything:
+```
+Claude Sonnet 4.6 (1M context) | 48k / 1000k | 5% used 48,200 | 95% remain 951,800
+context: ○○○○○○○○○○ 5%
+```
+
+Then confirms before touching any files:
+```
+◆ Write to ~/.claude/statusline-command.sh and patch settings.json? Yes
+```
+
+After confirming, **restart Claude Code** to see your new status line.
+
 ## What you can configure
 
 | Field | Description | Requires |
