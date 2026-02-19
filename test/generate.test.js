@@ -72,3 +72,8 @@ test('single layout produces only line1 variable', () => {
   assert.ok(s.includes('line1='))
   assert.ok(!s.includes('line2='))
 })
+
+test('rateLimitBars field includes format_reset_time function', () => {
+  const s = generateScript({ ...base, fields: ['rateLimitBars'] })
+  assert.ok(s.includes('format_reset_time()'))
+})
