@@ -1,5 +1,9 @@
 # claude-statusline
 
+[![npm version](https://img.shields.io/npm/v/@alejandroroman/cc-statusline.svg)](https://www.npmjs.com/package/@alejandroroman/cc-statusline)
+[![npm downloads](https://img.shields.io/npm/dm/@alejandroroman/cc-statusline.svg)](https://www.npmjs.com/package/@alejandroroman/cc-statusline)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+
 A rich multi-line status line for [Claude Code](https://claude.ai/code) with **real rate limit data**.
 
 ![status line screenshot](screenshot.png)

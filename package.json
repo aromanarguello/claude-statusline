@@ -1,14 +1,36 @@
 {
   "name": "@alejandroroman/cc-statusline",
-  "version": "1.0.0",
-  "description": "Interactive wizard to configure your Claude Code status line",
+  "version": "1.0.4",
+  "description": "A rich multi-line status line for Claude Code with real rate limit data. Interactive wizard to configure model info, token counts, context bars, and usage indicators.",
   "type": "module",
   "bin": {
-    "cc-statusline": "./setup.js"
+    "cc-statusline": "./bin/cc-statusline"
   },
   "scripts": {
     "test": "node --test test/*.test.js"
   },
+  "keywords": [
+    "claude",
+    "claude-code",
+    "statusline",
+    "status-bar",
+    "cli",
+    "terminal",
+    "rate-limit",
+    "context-window",
+    "anthropic",
+    "developer-tools"
+  ],
+  "homepage": "https://github.com/aromanarguello/claude-statusline#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aromanarguello/claude-statusline.git"
+  },
+  "bugs": {
+    "url": "https://github.com/aromanarguello/claude-statusline/issues"
+  },
+  "author": "Alejandro Roman",
+  "license": "MIT",
   "dependencies": {
     "@clack/prompts": "^0.9.0"
   },
