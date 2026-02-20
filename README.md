@@ -34,7 +34,7 @@ On first run, rate limit bars show `---` for ~1 second until the background API 
 ## Install
 
 ```bash
-npx claude-statusline
+npx @alejandroroman/cc-statusline
 ```
 
 Or clone and run locally:
@@ -49,7 +49,7 @@ The wizard asks what data to show, how to format it, previews the result, then w
 
 ## Using the wizard
 
-Running `npx claude-statusline` (or `node setup.js` if cloned locally) walks you through 4 steps:
+Running `npx @alejandroroman/cc-statusline` (or `node setup.js` if cloned locally) walks you through 4 steps:
 
 **Step 1 — Pick your fields** (multi-select, space to toggle)
 ```
@@ -110,7 +110,7 @@ After confirming, **restart Claude Code** to see your new status line.
 ## Reconfigure
 
 ```bash
-npx claude-statusline
+npx @alejandroroman/cc-statusline
 ```
 
 Re-running the wizard overwrites `~/.claude/statusline-command.sh` with your new choices.

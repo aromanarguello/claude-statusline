@@ -1,10 +1,10 @@
 {
-  "name": "claude-statusline",
+  "name": "@alejandroroman/cc-statusline",
   "version": "1.0.0",
   "description": "Interactive wizard to configure your Claude Code status line",
   "type": "module",
   "bin": {
-    "claude-statusline": "./setup.js"
+    "cc-statusline": "./setup.js"
   },
   "scripts": {
     "test": "node --test test/*.test.js"
