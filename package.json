@@ -4,7 +4,7 @@
   "description": "A rich Claude Code status line with model info, context usage, native rate limit data, and an interactive installer.",
   "type": "module",
   "bin": {
-    "cc-statusline": "./bin/cc-statusline"
+    "cc-statusline": "bin/cc-statusline"
   },
   "files": [
     "bin",
