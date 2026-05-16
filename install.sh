@@ -9,6 +9,11 @@ if ! command -v node &>/dev/null; then
   exit 1
 fi
 
+if ! node -e 'process.exit(Number(process.versions.node.split(".")[0]) >= 18 ? 0 : 1)' 2>/dev/null; then
+  echo "Error: Node.js 18+ is required. Current version: $(node --version)"
+  exit 1
+fi
+
 if [ ! -d "$SCRIPT_DIR/node_modules/@clack" ]; then
   echo "Installing dependencies..."
   npm install --prefix "$SCRIPT_DIR" --silent

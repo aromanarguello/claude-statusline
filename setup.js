@@ -7,20 +7,24 @@ import { homedir, tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { generateScript } from './lib/generate.js'
 import { applyStatusLine } from './lib/patch-settings.js'
-import { detectCredentials } from './lib/detect-credentials.js'
 
 const DEST     = join(homedir(), '.claude', 'statusline-command.sh')
 const SETTINGS = join(homedir(), '.claude', 'settings.json')
 
 p.intro('claude-statusline setup')
 
-// Step 1: Detect account type
-const hasRateLimits = detectCredentials()
-if (!hasRateLimits) {
-  p.log.info('No OAuth credentials found — rate limit fields hidden (Enterprise/API plan)')
+function hasCommand(command, args = ['--version']) {
+  const result = spawnSync(command, args, { stdio: 'ignore' })
+  return !result.error && result.status === 0
 }
 
-// Step 2: Pick data fields
+if (!hasCommand('jq')) {
+  p.log.error('jq is required because Claude Code sends status line data as JSON.')
+  p.outro('Install jq first: `brew install jq` on macOS, or `sudo apt install jq` on Debian/Ubuntu.')
+  process.exit(1)
+}
+
+// Step 1: Pick data fields
 const alwaysOptions = [
   { value: 'model',        label: 'Model name' },
   { value: 'tokenCounts',  label: 'Token counts (used / total)' },
@@ -36,13 +40,13 @@ const rateLimitOptions = [
 
 const fields = await p.multiselect({
   message: 'Which data fields do you want? (space to toggle, enter to confirm)',
-  options: hasRateLimits ? [...alwaysOptions, ...rateLimitOptions] : alwaysOptions,
-  initialValues: ['model', 'tokenCounts', 'usedPct', 'remainingPct', 'contextBar'],
+  options: [...alwaysOptions, ...rateLimitOptions],
+  initialValues: ['model', 'tokenCounts', 'usedPct', 'remainingPct', 'linesChanged', 'contextBar', 'rateLimitBars', 'resetTimes'],
   required: true,
 })
 if (p.isCancel(fields)) { p.cancel('Cancelled.'); process.exit(0) }
 
-// Step 3: Layout
+// Step 2: Layout
 const layout = await p.select({
   message: 'Layout?',
   options: [
@@ -53,7 +57,7 @@ const layout = await p.select({
 })
 if (p.isCancel(layout)) { p.cancel('Cancelled.'); process.exit(0) }
 
-// Step 4: Color style
+// Step 3: Color style
 const colorStyle = await p.select({
   message: 'Color style?',
   options: [
@@ -85,7 +89,7 @@ if (colorStyle === 'custom') {
   thresholds = { yellow: Number(yellow), red: Number(red) }
 }
 
-// Step 5: Preview
+// Step 4: Preview
 const config = { fields, layout, colorStyle, thresholds }
 const script = generateScript(config)
 
@@ -99,6 +103,10 @@ const fakeInput = JSON.stringify({
     remaining_percentage: 95,
   },
   cost: { total_lines_added: 47, total_lines_removed: 12 },
+  rate_limits: {
+    five_hour: { used_percentage: 23.5, resets_at: 1738425600 },
+    seven_day: { used_percentage: 41.2, resets_at: 1738857600 },
+  },
   version: '1.0.0',
 })
 
@@ -120,7 +128,7 @@ try {
   try { unlinkSync(tmpScript) } catch { /* ignore */ }
 }
 
-// Step 6: Confirm and write
+// Step 5: Confirm and write
 const ok = await p.confirm({
   message: `Write to ${DEST} and patch settings.json?`,
   initialValue: true,
@@ -137,4 +145,4 @@ const rawSettings = existsSync(SETTINGS) ? readFileSync(SETTINGS, 'utf8') : '{}'
 writeFileSync(SETTINGS, applyStatusLine(rawSettings, DEST))
 
 spinner.stop('Done')
-p.outro(`Restart Claude Code to see your new status line.\nRe-run \`npx claude-statusline\` any time to reconfigure.`)
+p.outro(`Restart Claude Code to see your new status line.\nRe-run \`npx @alejandroroman/cc-statusline\` any time to reconfigure.`)

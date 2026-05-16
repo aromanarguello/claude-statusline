@@ -4,7 +4,7 @@
 [![npm downloads](https://img.shields.io/npm/dm/@alejandroroman/cc-statusline.svg)](https://www.npmjs.com/package/@alejandroroman/cc-statusline)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
-A rich multi-line status line for [Claude Code](https://claude.ai/code) with **real rate limit data**.
+A rich multi-line status line for [Claude Code](https://code.claude.com/docs/en/statusline) using Claude Code's native status line data.
 
 ![status line screenshot](screenshot.png)
 
@@ -12,28 +12,27 @@ A rich multi-line status line for [Claude Code](https://claude.ai/code) with **r
 
 | Line | Content | Source |
 |------|---------|--------|
-| 1 | Model name, token counts, used/remaining %, session cost, lines changed | Real data from Claude Code |
-| 2 | Context bar, 5-hour usage bar, weekly usage bar, extra credits bar | All real — context from stdin, rate limits from API |
-| 3 | Rate limit reset times | Real reset times from API |
+| 1 | Model name, token counts, used/remaining %, lines changed | Real data from Claude Code |
+| 2 | Context bar, 5-hour usage bar, weekly usage bar | Real data from Claude Code status line JSON |
+| 3 | Rate limit reset times | Real reset times from Claude Code status line JSON |
 
 ## How it works
 
 Claude Code pipes a JSON object to the status line command via stdin on each render tick. The script:
 
 1. Extracts token counts and context data from stdin JSON (single `jq` call)
-2. Fetches rate limit data from `https://api.anthropic.com/api/oauth/usage` using your OAuth credentials
-3. Caches API responses for 60 seconds with non-blocking background refresh (~590ms API call never blocks the render path)
-4. Formats everything with ANSI colors and dynamic color-coding (green/yellow/red based on usage level)
+2. Reads `rate_limits.five_hour` and `rate_limits.seven_day` when Claude Code provides them
+3. Formats everything with ANSI colors and dynamic color-coding (green/yellow/red based on usage level)
 
-On first run, rate limit bars show `---` for ~1 second until the background API fetch completes.
+Rate limit bars show `---` before Claude Code has emitted rate limit fields, or for plans/accounts where those fields are not available.
 
 ## Requirements
 
+- Node.js 18+ (for the installer wizard)
 - [jq](https://jqlang.github.io/jq/) — `brew install jq` (macOS) or `apt install jq` (Linux)
-- [curl](https://curl.se/) — pre-installed on macOS and most Linux
-- [Claude Code](https://claude.ai/code) CLI (Pro, Max, or Team subscription for rate limit data)
+- [Claude Code](https://code.claude.com/) CLI
 
-> **Note:** API users (pay-per-token) won't see rate limit bars since they have no usage caps. The context bar and session stats still work.
+> **Note:** Claude Code exposes context and rate limit fields through the official `statusLine` stdin JSON. Context fields are available after the first API response. Rate limit fields appear for Claude.ai subscribers when Claude Code provides them; API/pay-per-token users may see `---` for those bars.
 
 ## Install
 
@@ -62,8 +61,10 @@ Running `npx @alejandroroman/cc-statusline` (or `node setup.js` if cloned locall
 ◇ ◼ Token counts (used / total)
 ◇ ◼ Used % with raw token count
 ◇ ◼ Remaining % with raw token count
-◇ ◻ Lines changed (+added / -removed)
+◇ ◼ Lines changed (+added / -removed)
 ◇ ◼ Context window progress bar
+◇ ◼ 5-hour & weekly rate limit bars
+◇ ◼ Rate limit reset times
 ```
 
 **Step 2 — Pick a layout**
@@ -86,7 +87,8 @@ Running `npx @alejandroroman/cc-statusline` (or `node setup.js` if cloned locall
 The wizard renders your statusline with sample data so you see exactly what it looks like before writing anything:
 ```
 Claude Sonnet 4.6 (1M context) | 48k / 1000k | 5% used 48,200 | 95% remain 951,800
-context: ○○○○○○○○○○ 5%
+context: ○○○○○○○○○○ 5% | 5-hour: ●●○○○○○○○○ 23% | weekly: ●●●●○○○○○○ 41%
+5-hour resets 11:00am feb 01 | weekly resets 11:00am feb 06
 ```
 
 Then confirms before touching any files:
@@ -106,10 +108,10 @@ After confirming, **restart Claude Code** to see your new status line.
 | Remaining % | % of context remaining | — |
 | Lines changed | +added / -removed in session | — |
 | Context bar | ●●●○○○○○○○ visual progress bar | — |
-| Rate limit bars | 5-hour & weekly usage bars | Pro/Max/Team |
-| Reset times | When rate limits reset | Pro/Max/Team |
+| Rate limit bars | 5-hour & weekly usage bars | Claude Code `rate_limits` fields |
+| Reset times | When rate limits reset | Claude Code `rate_limits` fields |
 
-**Enterprise/API users:** Rate limit fields are automatically hidden — the wizard detects your account type silently.
+**Enterprise/API users:** Rate limit fields degrade gracefully to `---` when Claude Code does not provide usage caps. The context bar and session stats still work.
 
 ## Reconfigure
 
