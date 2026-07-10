@@ -119,3 +119,64 @@ test('generated script renders native rate limit data from stdin', () => {
     rmSync(dir, { recursive: true, force: true })
   }
 })
+
+test('generated script degrades to --- when rate_limits is absent', () => {
+  const script = generateScript({
+    fields: ['model', 'contextBar', 'rateLimitBars', 'resetTimes'],
+    layout: 'multi',
+    colorStyle: 'monochrome',
+    thresholds: { yellow: 50, red: 80 }
+  })
+  const dir = mkdtempSync(join(tmpdir(), 'cc-statusline-test-'))
+  const file = join(dir, 'statusline.sh')
+  writeFileSync(file, script, { mode: 0o700 })
+
+  try {
+    const result = spawnSync('bash', [file], {
+      input: JSON.stringify({
+        model: { display_name: 'Opus' },
+        context_window: { used_percentage: 25 }
+      }),
+      encoding: 'utf8',
+    })
+
+    assert.equal(result.status, 0, result.stderr)
+    assert.match(result.stdout, /5-hour: \S+ ---/)
+    assert.match(result.stdout, /weekly: \S+ ---/)
+    assert.match(result.stdout, /5-hour resets --- .* weekly resets ---/)
+  } finally {
+    rmSync(dir, { recursive: true, force: true })
+  }
+})
+
+test('generated script handles five_hour present but seven_day absent', () => {
+  const script = generateScript({
+    fields: ['model', 'contextBar', 'rateLimitBars', 'resetTimes'],
+    layout: 'multi',
+    colorStyle: 'monochrome',
+    thresholds: { yellow: 50, red: 80 }
+  })
+  const dir = mkdtempSync(join(tmpdir(), 'cc-statusline-test-'))
+  const file = join(dir, 'statusline.sh')
+  writeFileSync(file, script, { mode: 0o700 })
+
+  try {
+    const result = spawnSync('bash', [file], {
+      input: JSON.stringify({
+        model: { display_name: 'Opus' },
+        context_window: { used_percentage: 25 },
+        rate_limits: {
+          five_hour: { used_percentage: 23.5, resets_at: 1738425600 }
+        }
+      }),
+      encoding: 'utf8',
+    })
+
+    assert.equal(result.status, 0, result.stderr)
+    assert.match(result.stdout, /5-hour: \S+ 23%/)
+    assert.match(result.stdout, /weekly: \S+ ---/)
+    assert.match(result.stdout, /weekly resets ---/)
+  } finally {
+    rmSync(dir, { recursive: true, force: true })
+  }
+})

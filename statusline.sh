@@ -22,9 +22,9 @@ parsed=$(echo "$input" | jq -r '[
   (.cost.total_lines_removed // 0),
   (.version // "unknown"),
   ((.rate_limits.five_hour.used_percentage // -1) | floor),
-  (.rate_limits.five_hour.resets_at // ""),
+  ((.rate_limits.five_hour.resets_at // "null") | tostring),
   ((.rate_limits.seven_day.used_percentage // -1) | floor),
-  (.rate_limits.seven_day.resets_at // "")
+  ((.rate_limits.seven_day.resets_at // "null") | tostring)
 ] | @tsv' 2>/dev/null) || parsed=""
 
 if [[ -n "$parsed" ]]; then
